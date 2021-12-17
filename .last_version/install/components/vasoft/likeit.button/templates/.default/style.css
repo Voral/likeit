@@ -1,0 +1,30 @@
+.vs-likeit {
+	display: inline-block;
+	vertical-align: middle;
+	height: 30px;
+	line-height: 30px;
+}
+
+.vs-likeit:before {
+	display: inline-block;
+	vertical-align: middle;
+	height: 30px;
+	width: 30px;
+	line-height: 30px;
+	background: transparent url(images/like.png) 0 0 no-repeat;
+	background-size: contain;
+	content: '';
+	margin-right: 5px;
+}
+
+.vs-likeit-active:before {
+	background-image: url(images/like_active.png);
+}
+
+.vs-likeit-action {
+	cursor: pointer;
+}
+
+.vs-likeit-cnt {
+
+}
