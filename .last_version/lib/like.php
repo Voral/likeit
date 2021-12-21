@@ -12,73 +12,15 @@ use Bitrix\Main\Application;
  * @package Vasoft\Likeit
  * @author Alexander Vorobyev https://va-soft.ru/
  * @version 1.2.0
+ * @depricated
  */
-class LikeTable extends Entity\DataManager
+class LikeTable extends \Vasoft\LikeIt\Data\LikeTable
 {
 
     const LIKE_RESULT_ERROR = 0;
     const LIKE_RESULT_ADDED = 1;
     const LIKE_RESULT_REMOVED = 2;
     const COOKIE_NAME = 'VSLK_HISTORY';
-
-    public static function getTableName()
-    {
-        return 'vasoft_likeit_like';
-    }
-
-    public static function getMap()
-    {
-        return array(
-            new Entity\IntegerField('ID', array(
-                'primary' => true,
-                'autocomplete' => true
-            )),
-            new Entity\IntegerField('ELEMENTID', array(
-                'required' => true,
-            )),
-            new Entity\StringField('IP', array(
-                'required' => true,
-            )),
-            new Entity\StringField('USERAGENT', array(
-                'required' => true,
-            )),
-            new Entity\StringField('HASH', array(
-                'required' => true,
-            )),
-            new Entity\IntegerField('USERID', array()),
-        );
-    }
-
-    /**
-     * Создает индексы при установке модуля
-     */
-    public static function createIndexes()
-    {
-        $connection = Application::getInstance()->getConnection(self::getConnectionName());
-        if ('mysql' == $connection->getType()) {
-            $sql = "CREATE UNIQUE INDEX %s ON " . self::getTableName() . " (%s)";
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_HASH_EID', 'HASH, ELEMENTID'));
-            $sql = "CREATE INDEX %s ON " . self::getTableName() . " (%s)";
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_EID', 'ELEMENTID'));
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_HASH', 'HASH'));
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_USERID', 'USERID'));
-        }
-    }
-
-    /**
-     * Удаляет индексы при удалении модуля
-     */
-    public static function dropIndexes()
-    {
-        $connection = Application::getInstance()->getConnection(self::getConnectionName());
-        if ('mysql' === $connection->getType()) {
-            $sql = 'DROP INDEX %s ON ' . self::getTableName();
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_HASH'));
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_USERID'));
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_EID'));
-            $connection->queryExecute(sprintf($sql, 'VASOFT_LIKIT_HASH_EID'));
-        }
-    }
 
     /**
      * Проверяет количество лайков для списка элементов инфоблока
