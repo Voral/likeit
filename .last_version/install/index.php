@@ -60,14 +60,13 @@ class vasoft_likeit extends CModule
 		if ($request['step'] < 2) {
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("VASOFT_LIKEIT_MODULE_REMOVING"), self::GetPath() . '/install/unstep1.php');
 		} elseif ($request['step'] == 2) {
+            \Bitrix\Main\Loader::includeModule($this->MODULE_ID);
 			self::unRegisterDependences();
-			self::unInstallFiles();
+            \Vasoft\Likeit\LikeTable::dropIndexes();
 			if ($request['savedata'] != 'Y') {
-				self::unInstallDB();
-			} else {
-				\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
-				\Vasoft\Likeit\LikeTable::dropIndexes();
+                self::unInstallDB();
 			}
+            self::unInstallFiles();
 			\Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("VASOFT_LIKEIT_MODULE_REMOVING"), self::GetPath() . '/install/unstep2.php');
 		}
