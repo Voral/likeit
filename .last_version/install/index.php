@@ -63,10 +63,9 @@ class vasoft_likeit extends CModule
 			self::unRegisterDependences();
 			self::unInstallFiles();
 			if ($request['savedata'] != 'Y') {
-				self::unInstallDB();
-			} else {
 				\Bitrix\Main\Loader::includeModule($this->MODULE_ID);
 				\Vasoft\Likeit\LikeTable::dropIndexes();
+				self::unInstallDB();
 			}
 			\Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("VASOFT_LIKEIT_MODULE_REMOVING"), self::GetPath() . '/install/unstep2.php');
