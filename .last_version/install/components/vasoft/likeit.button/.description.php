@@ -1,5 +1,7 @@
 <?php
+
 use Bitrix\Main\Localization\Loc;
+
 /**
  *
  * @author Воробьев Александр
@@ -8,15 +10,17 @@ use Bitrix\Main\Localization\Loc;
  * @subpackage
  *
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $arComponentDescription = array(
-	"NAME" => Loc::getMessage("VASOFT_LIKEIT.NAME"),
-	"DESCRIPTION" => Loc::getMessage("VASOFT_LIKEIT.DESCRIPTION"),
-	"SORT" => 20,
-	"CACHE_PATH" => "Y",
-	"PATH" => array(
-		"ID" => ""
-	),
-	"COMPLEX" => "N",
+    "NAME" => Loc::getMessage("VASOFT_LIKEIT.NAME"),
+    "DESCRIPTION" => Loc::getMessage("VASOFT_LIKEIT.DESCRIPTION"),
+    "SORT" => 20,
+    "CACHE_PATH" => "Y",
+    "PATH" => array(
+        "ID" => ""
+    ),
+    "COMPLEX" => "N",
 );

@@ -1,12 +1,22 @@
 <?php
+
 /**
- * Скрипт обработки AJAX запроса количества лайков по списку элементов
- * Принимает в параметре запроса IDS массив ИД элементов ИБ
- *
+ * Файл будет исключен из следующих версий - будут работать контроллеры модуля
+ * @depricated
  * module: vasoft.likeit
+ *
+ * @global CMain $APPLICATION
+ *
+ * @noinspection DuplicatedCode
+ * @noinspection PhpDefineCanBeReplacedWithConstInspection
+ * @noinspection PhpUnhandledExceptionInspection
+ * @noinspection JsonEncodingApiUsageInspection
+ * @noinspection PhpComposerExtensionStubsInspection
  */
+
 use Bitrix\Main\Application;
-use Vasoft\Likeit\LikeTable;
+use Bitrix\Main\Loader;
+use Vasoft\LikeIt\Services\Statistic;
 
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
@@ -22,9 +32,10 @@ header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 header('Content-type: application/json');
 
-if (\Bitrix\Main\Loader::includeModule('vasoft.likeit')) {
-	$arResult['ITEMS'] = LikeTable::getStatList($arIDs);
-	$arResult['RESULT'] = 1;
+if (Loader::includeModule('vasoft.likeit')) {
+    $stat = new Statistic();
+    $arResult['ITEMS'] = $stat->get($arIDs);
+    $arResult['RESULT'] = 1;
 }
 echo json_encode($arResult);
 die();

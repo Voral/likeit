@@ -1,10 +1,15 @@
 <?php
+
 /**
- * Скрипт обработки AJAX установки/снятия лайка для элемента
- * Принимает в параметре запроса ID ИД элемента ИБ
- * если текущий пользоавтель уже стави лайк - происходит отмена лайка
+ * Файл будет исключен из следующих версий - будут работать контроллеры модуля
+ * @depricated
+ * @module: vasoft.likeit
  *
- * module: vasoft.likeit
+ * @noinspection PhpDefineCanBeReplacedWithConstInspection
+ * @noinspection JsonEncodingApiUsageInspection
+ * @noinspection PhpComposerExtensionStubsInspection
+ * @noinspection PhpUnhandledExceptionInspection
+ * @noinspection DuplicatedCode
  */
 
 use Bitrix\Main\Application;
@@ -16,18 +21,17 @@ require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/include/prolog_be
 
 $context = Application::getInstance()->getContext();
 $request = $context->getRequest();
-$ID = intval($request->get('ID'));
+$ID = (int)$request->get('ID');
 $arResult = ['RESULT' => 0];
 
-//$APPLICATION->RestartBuffer();
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 header('Content-type: application/json');
 
 
 if ($ID > 0 && \Bitrix\Main\Loader::includeModule('vasoft.likeit')) {
-	$arResult['RESULT'] = LikeTable::setLike($ID);
-	$arResult['ID'] = $ID;
+    $arResult['RESULT'] = LikeTable::setLike($ID);
+    $arResult['ID'] = $ID;
 }
 echo json_encode($arResult);
 die();

@@ -1,4 +1,5 @@
 <?php
+/** @noinspection AutoloadingIssuesInspection */
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
@@ -9,6 +10,10 @@ Loc::loadLanguageFile(__FILE__);
 
 class VasoftLikeitButtonComponent extends CBitrixComponent
 {
+    /**
+     * @noinspection PhpMissingReturnTypeInspection
+     * @noinspection ReturnTypeCanBeDeclaredInspection
+     */
     public function onPrepareComponentParams($arParams)
     {
         $arParams["ID"] = isset($arParams["ID"]) ? (int)$arParams["ID"] : 0;
@@ -17,12 +22,10 @@ class VasoftLikeitButtonComponent extends CBitrixComponent
         return $arParams;
     }
 
-    /**
-     * Выполнение компонента
-     */
     public function executeComponent()
     {
         $this->includeComponentTemplate();
+        /** @noinspection NullPointerExceptionInspection */
         $this->getTemplate()->addExternalJs('/bitrix/js/vasoft.likeit/likeit.js');
     }
 
