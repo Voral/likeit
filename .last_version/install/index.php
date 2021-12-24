@@ -23,8 +23,7 @@ class vasoft_likeit extends CModule
 {
     var $MODULE_ID = "vasoft.likeit";
     private const MINIMAL_KERNEL = '21.600.400';
-    private const MINIMAL_PHP = 700040000;
-    private const MINIMAL_PHP_PRINT = '7.4';
+    private const MINIMAL_PHP_VERSION = '7.4.0';
 
     private static array $arTables = array(
         \Vasoft\LikeIt\Data\LikeTable::class
@@ -43,7 +42,7 @@ class vasoft_likeit extends CModule
         $this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
         $this->MODULE_NAME = Loc::getMessage('VASOFT_LIKEIT_MODULE_NAME');
         $this->MODULE_DESCRIPTION = Loc::getMessage('VASOFT_LIKEIT_MODULE_DESCRIPTION');
-        $this->PARTNER_NAME = 'VASoft';
+        $this->PARTNER_NAME = Loc::getMessage("VASOFT_COMPANY");
         $this->PARTNER_URI = 'https://va-soft.ru/';
 
         $this->SHOW_SUPER_ADMIN_GROUP_RIGHTS = 'Y';
@@ -62,19 +61,37 @@ class vasoft_likeit extends CModule
     public function DoInstall()
     {
         global $APPLICATION;
-        if (!Loader::includeModule('iblock')) {
-            $APPLICATION->ThrowException(Loc::getMessage('VASOFT_LIKEIT_NEED_IBLOCK'));
-        } elseif (self::invalidPHP()) {
-            $APPLICATION->ThrowException(Loc::getMessage("VASOFT_LIKEIT_NEED_PHP", ['#VERSION#' => self::MINIMAL_PHP_PRINT]));
-        } elseif (self::invalidKernel()) {
-            $APPLICATION->ThrowException(Loc::getMessage("VASOFT_LIKEIT_NEED_KERNEL", ['#VERSION#' => self::MINIMAL_KERNEL]));
-        } else {
+        $result = false;
+        try {
+            $this->checkRequirements();
             ModuleManager::registerModule($this->MODULE_ID);
-            $this->installFiles();
-            $this->installDB();
-            $this->registerDependencies();
+            if (Loader::includeModule($this->MODULE_ID)) {
+                $this->installFiles();
+                $this->installDB();
+                $this->registerDependencies();
+                $result = true;
+            } else {
+                throw new Main\SystemException(Loc::getMessage("VASOFT_LIKEIT_MODULE_REGISTER_ERROR"));
+            }
+        } catch (\Exception $exception) {
+            $APPLICATION->ThrowException($exception->getMessage());
+        }
+        return $result;
+    }
+
+    private function checkRequirements(): void
+    {
+        if (!Loader::includeModule('iblock')) {
+            throw new \Exception(Loc::getMessage('VASOFT_LIKEIT_NEED_IBLOCK'));
+        }
+        if (CheckVersion(PHP_VERSION, self::MINIMAL_PHP_VERSION) === false) {
+            throw new \Exception(Loc::getMessage("VASOFT_LIKEIT_NEED_PHP", ['#VERSION#' => self::MINIMAL_PHP_VERSION]));
+        }
+        if (CheckVersion(ModuleManager::getVersion('main'), self::MINIMAL_KERNEL) === false) {
+            throw new \Exception(Loc::getMessage("VASOFT_LIKEIT_NEED_KERNEL", ['#VERSION#' => self::MINIMAL_KERNEL]));
         }
     }
+
 
     /**
      * @return void
@@ -92,30 +109,20 @@ class vasoft_likeit extends CModule
         $context = Application::getInstance()->getContext();
         $request = $context->getRequest();
         $step = (int)$request->get('step');
-        $saveData = trim($request->get('step')) === 'Y';
+        $saveData = trim($request->get('savedata')) === 'Y';
         if ($step < 2) {
             $APPLICATION->IncludeAdminFile(Loc::getMessage("VASOFT_LIKEIT_MODULE_REMOVING"), $this->getPath() . '/install/unstep1.php');
         } elseif (2 === $step) {
+            Loader::includeModule($this->MODULE_ID);
             $this->unRegisterDependencies();
             $this->unInstallFiles();
             if (!$saveData) {
-                Loader::includeModule($this->MODULE_ID);
-                LikeTable::dropIndexes();
                 $this->unInstallDB();
+                Option::delete($this->MODULE_ID);
             }
             ModuleManager::unRegisterModule($this->MODULE_ID);
             $APPLICATION->IncludeAdminFile(Loc::getMessage("VASOFT_LIKEIT_MODULE_REMOVING"), $this->getPath() . '/install/unstep2.php');
         }
-    }
-
-    public static function invalidPHP(): bool
-    {
-        return ((PHP_MAJOR_VERSION * 10000 + PHP_MINOR_VERSION) * 10000 + PHP_RELEASE_VERSION) < self::MINIMAL_PHP;
-    }
-
-    public static function invalidKernel(): bool
-    {
-        return !CheckVersion(ModuleManager::getVersion('main'), self::MINIMAL_KERNEL);
     }
 
     /**
@@ -128,13 +135,12 @@ class vasoft_likeit extends CModule
      */
     public function installDB()
     {
-        Loader::includeModule($this->MODULE_ID);
         foreach (self::$arTables as $tableClass) {
             if (!Application::getConnection($tableClass::getConnectionName())->isTableExists(Base::getInstance($tableClass)->getDBTableName())) {
                 Base::getInstance($tableClass)->createDbTable();
             }
         }
-        LikeTable::createIndexes();
+        \Vasoft\LikeIt\Data\LikeTable::createIndexes();
     }
 
 
@@ -143,18 +149,6 @@ class vasoft_likeit extends CModule
     {
         CopyDirFiles($this->getPath() . '/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
         CopyDirFiles($this->getPath() . '/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
-        $path = $this->getPath() . '/tools/';
-        $pathDR = $this->getPath(true) . '/tools/';
-        if (Bitrix\Main\IO\Directory::isDirectoryExists($path) && $dir = opendir($path)) {
-            while (false !== $item = readdir($dir)) {
-                if (in_array($item, self::$exclusionAdminFiles, true)) {
-                    continue;
-                }
-                $subName = str_replace('.', '_', $this->MODULE_ID);
-                file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/' . $subName . '_' . $item, '<' . '?php require($_SERVER["DOCUMENT_ROOT"]."' . $pathDR . $item . '");');
-            }
-            closedir($dir);
-        }
     }
 
     /**
@@ -168,11 +162,10 @@ class vasoft_likeit extends CModule
      */
     public function unInstallDB()
     {
-        Loader::includeModule($this->MODULE_ID);
+        \Vasoft\LikeIt\Data\LikeTable::dropIndexes();
         foreach (self::$arTables as $tableClass) {
             Bitrix\Main\Application::getConnection($tableClass::getConnectionName())->queryExecute('drop table if exists ' . Base::getInstance($tableClass)->getDBTableName());
         }
-        Option::delete($this->MODULE_ID);
     }
 
     /** @noinspection ReturnTypeCanBeDeclaredInspection */
@@ -180,17 +173,6 @@ class vasoft_likeit extends CModule
     {
         \Bitrix\Main\IO\Directory::deleteDirectory($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/vasoft.likeit/');
         DeleteDirFiles($this->getPath() . "/install/components", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components");
-        $path = $this->getPath() . '/tools/';
-        if (Bitrix\Main\IO\Directory::isDirectoryExists($path) && $dir = opendir($path)) {
-            while (false !== $item = readdir($dir)) {
-                if (in_array($item, self::$exclusionAdminFiles, true)) {
-                    continue;
-                }
-                $subName = str_replace('.', '_', $this->MODULE_ID);
-                File::deleteFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/tools/' . $subName . '_' . $item);
-            }
-            closedir($dir);
-        }
     }
 
     /**
@@ -199,15 +181,13 @@ class vasoft_likeit extends CModule
      */
     public function registerDependencies(): void
     {
-        if (Loader::includeModule($this->MODULE_ID)) {
-            EventManager::getInstance()->registerEventHandler(
-                'iblock',
-                'OnBeforeIBlockElementDelete',
-                $this->MODULE_ID,
-                \Vasoft\LikeIt\Data\LikeTable::class,
-                "onBeforeElementDeleteHandler"
-            );
-        }
+        EventManager::getInstance()->registerEventHandler(
+            'iblock',
+            'OnBeforeIBlockElementDelete',
+            $this->MODULE_ID,
+            \Vasoft\LikeIt\Data\LikeTable::class,
+            "onBeforeElementDeleteHandler"
+        );
     }
 
     /**
@@ -216,15 +196,13 @@ class vasoft_likeit extends CModule
      */
     public function unRegisterDependencies(): void
     {
-        if (Loader::includeModule($this->MODULE_ID)) {
-            EventManager::getInstance()->unRegisterEventHandler(
-                'iblock',
-                'OnBeforeIBlockElementDelete',
-                $this->MODULE_ID,
-                \Vasoft\LikeIt\Data\LikeTable::class,
-                "onBeforeElementDeleteHandler"
-            );
-        }
+        EventManager::getInstance()->unRegisterEventHandler(
+            'iblock',
+            'OnBeforeIBlockElementDelete',
+            $this->MODULE_ID,
+            \Vasoft\LikeIt\Data\LikeTable::class,
+            "onBeforeElementDeleteHandler"
+        );
     }
 
     public function getPath($notDocumentRoot = false): string

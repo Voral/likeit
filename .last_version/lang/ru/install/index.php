@@ -5,3 +5,5 @@ $MESS["VASOFT_LIKEIT_MODULE_REMOVING"] = "Удаление модуля лайков";
 $MESS["VASOFT_LIKEIT_NEED_IBLOCK"] = "Необходим модуль IBlock";
 $MESS["VASOFT_LIKEIT_NEED_KERNEL"] = "Требуется ядро версии #VERSION# и выше";
 $MESS["VASOFT_LIKEIT_NEED_PHP"] = "Требуется PHP версии #VERSION# и выше";
+$MESS["VASOFT_LIKEIT_MODULE_REGISTER_ERROR"] = "Не удалось зарегистрировать модуль";
+$MESS["VASOFT_COMPANY"] = "ИП Воробьев А.Е.";
