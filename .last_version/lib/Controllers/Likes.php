@@ -3,7 +3,6 @@
 
 namespace Vasoft\LikeIt\Controllers;
 
-use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Error;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\ActionFilter;

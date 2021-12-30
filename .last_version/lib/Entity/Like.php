@@ -3,10 +3,8 @@
 namespace Vasoft\LikeIt\Entity;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-//use Vasoft\LikeIt\Controllers\Likes;
 use Vasoft\LikeIt\Data\EO_Like;
 use Vasoft\LikeIt\Data\EO_Like_Collection;
 use Vasoft\LikeIt\Helpers\Cached;
@@ -25,8 +23,6 @@ final class Like
 
     public function __construct(int $elementId)
     {
-        echo class_exists(\Vasoft\Likeit\Controllers\Likes::class);
-        $e = new \Vasoft\LikeIt\Controllers\Likes(null);
         $this->elementId = $elementId;
     }
 
@@ -42,7 +38,6 @@ final class Like
         $collection = (new Statistic())->getListUserLikesForElement($this->elementId);
         $result = LikeResult::ERROR;
         if ($collection) {
-            Debug::writeToFile(__METHOD__);
             $result = $collection->count() === 0 ? $this->set() : $this->delete($collection);
             if ($result !== LikeResult::ERROR) {
                 Cached::clearCacheTagged();
@@ -57,7 +52,6 @@ final class Like
      */
     private function set(): int
     {
-        Debug::writeToFile(__METHOD__);
         $user = User::getInstance();
         $like = new EO_Like();
         $like
@@ -80,7 +74,6 @@ final class Like
      */
     private function delete(EO_Like_Collection $collection): int
     {
-        Debug::writeToFile(__METHOD__);
         $result = true;
         foreach ($collection as $row) {
             $res = $row->delete();

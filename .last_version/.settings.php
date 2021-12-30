@@ -5,6 +5,6 @@ return [
             'defaultNamespace' => '\\Vasoft\\LikeIt\\Controllers',
         ],
         'readonly' => true,
-        'debug' => true
+        'debug' => false
     ]
 ];

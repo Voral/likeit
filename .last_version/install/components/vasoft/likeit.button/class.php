@@ -1,10 +1,11 @@
 <?php
 /** @noinspection AutoloadingIssuesInspection */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
-use Bitrix\Main\Localization\Loc,
-    Bitrix\Main\Page\Asset;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadLanguageFile(__FILE__);
 

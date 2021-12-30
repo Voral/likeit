@@ -1,4 +1,7 @@
-<?php
+<?php /** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpUndefinedNamespaceInspection */
+/** @noinspection PhpUndefinedClassInspection */
+
 /**
  * Файл будет удален - отключаем проверки
  * @noinspection PhpUnusedPrivateMethodInspection

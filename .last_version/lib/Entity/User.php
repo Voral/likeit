@@ -3,6 +3,7 @@
 namespace Vasoft\LikeIt\Entity;
 
 use Bitrix\Main\Context;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Cookie;
 use RuntimeException;
 
@@ -12,7 +13,7 @@ final class User
 
     private static ?User $instance = null;
     private int $id = 0;
-    private string $hash = '';
+    private string $hash;
     private string $ip = '';
     private string $userAgent = '';
 
@@ -42,11 +43,12 @@ final class User
     }
 
     /**
-     * @throws RuntimeException
+     * @return mixed
+     * @throws SystemException
      */
     public function __wakeup()
     {
-        throw new RuntimeException("Cannot unserialize singleton");
+        throw new SystemException("Cannot unserialize singleton");
     }
 
     /**
