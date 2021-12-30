@@ -1,13 +1,30 @@
-<?php
+<?php /** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpUndefinedNamespaceInspection */
+/** @noinspection PhpUndefinedClassInspection */
+
+/**
+ * ���� ����� ������ - ��������� ��������
+ * @noinspection PhpUnusedPrivateMethodInspection
+ * @noinspection PhpUnused
+ * @noinspection PhpMissingParamTypeInspection
+ * @noinspection AccessModifierPresentedInspection
+ * @noinspection AutoloadingIssuesInspection
+ * @noinspection PhpMissingReturnTypeInspection
+ * @noinspection ReturnTypeCanBeDeclaredInspection
+ */
 
 namespace Vasoft\Likeit;
 
-use \Bitrix\Main\Entity;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
-use Bitrix\Main\Application;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Vasoft\LikeIt\Entity\Like;
+use Vasoft\LikeIt\Entity\User;
+use Vasoft\LikeIt\Services\Statistic;
 
 /**
- * Class LikeTable Таблица для хранения лайков проставленных пользователями
+ * Class LikeTable ������� ��� �������� ������ ������������� ��������������
  *
  * @package Vasoft\Likeit
  * @author Alexander Vorobyev https://va-soft.ru/
@@ -81,155 +98,95 @@ class LikeTable extends Entity\DataManager
     }
 
     /**
-     * Проверяет количество лайков для списка элементов инфоблока
-     * @param array $arIDs массив ИД элементов ИБ
-     * @param bool $foruser создать массив по текущему пользователю (true) или полный (false)
+     * @depricated
+     * @param array $arIDs
+     * @param $foruser
      * @return array
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
      */
     public static function checkLike(array $arIDs, $foruser = true)
     {
-        $cntIds = count($arIDs);
-        $arResult = [];
-        if ($cntIds > 0) {
-            if ($foruser) {
-                $arFilterOnce = self::getFields();
-                $arFilterOnce['LOGIC'] = 'OR';
-            } else {
-                $arFilterOnce = [];
-            }
-            if ($cntIds === 1) {
-                $arFilter[] = $arFilterOnce;
-                $arFilter['ELEMENTID'] = $arIDs[0];
-                $arResult[$arIDs[0]] = 0;
-            } else {
-                $arFilter = ['LOGIC' => 'OR'];
-                foreach ($arIDs as $id) {
-                    $arFilterSub = $arFilterOnce;
-                    $arFilterSub['ELEMENTID'] = $id;
-                    $arFilter[] = $arFilterSub;
-                    $arResult[$id] = 0;
-                }
-            }
-            $likeIterator = self::getList([
-                'filter' => $arFilter,
-                'select' => ['ELEMENTID', 'CNT'],
-                'group' => ['ELEMENTID'],
-                'runtime' => [
-                    'CNT' => [
-                        'data_type' => 'integer',
-                        'expression' => ['COUNT(%s)', 'ID']
-                    ]
-                ]
-            ]);
-            while ($arRecord = $likeIterator->fetch()) {
-                $arResult[$arRecord['ELEMENTID']] = $arRecord['CNT'];
-            }
-        }
-        return $arResult;
+        $stat = new Statistic();
+        $result = $foruser ? $stat->checkLikeUser($arIDs) : $stat->checkLike($arIDs);
+        self::flushCookie();
+        return $result;
     }
 
     /**
-     * Получение полной статистики по лайкам с информацией о выборе текущего пользователя
-     * @param array $arIDS массивИД элементов ИБ
-     * @return array
+     * @depricated
      */
     public static function getStatList(array $arIDS)
     {
-        $arAll = self::checkLike($arIDS, false);
-        $arUser = self::checkLike($arIDS);
-        $arResult = [];
-        foreach ($arAll as $key => $count) {
-            $arResult[] = [
-                'ID' => $key,
-                'CNT' => $count,
-                'CHECKED' => $arUser[$key]
-            ];
-        }
-        return $arResult;
+        $result = (new Statistic())->get($arIDS);
+        self::flushCookie();
+        return $result;
     }
 
     /**
-     * Поучение хэша текущего поьзователя
+     * @depricated
      * @return string
      */
     public static function getHash()
     {
-        $server = Context::getCurrent()->getServer();
-        return md5($server->get('HTTP_USER_AGENT') . ' ' . self::getIP());
+        $result = User::getInstance()->getHash();
+        self::flushCookie();
+        return $result;
     }
 
     /**
-     * Получение ассива общих полей
      * @return array
+     * @deprecated
      */
     private static function getFields()
     {
-        global $USER;
+        $user = User::getInstance();
         $arResult = [];
-        if ($USER->IsAuthorized()) {
-            $arResult['USERID'] = $USER->GetId();
+        if ($user->getId() > 0) {
+            $arResult['USERID'] = $user->getId();
         }
-        $arResult['HASH'] = self::getCookie();
+        $arResult['HASH'] = $user->getHash();
+        self::flushCookie();
         return $arResult;
     }
 
     /**
-     * Получние значения куки текущего пользователя, если куки не существует - создается
+     * @depricated
      * @return string
      */
     public static function getCookie()
     {
-        global $APPLICATION;
-
-        $request = Context::getCurrent()->getRequest();
-        $verifyCookie = trim($request->getCookie(self::COOKIE_NAME));
-        if ($verifyCookie == '') {
-            $verifyCookie = self::getHash();
-        }
-        /**
-         * @todo разобраться как поставить куку D7
-         * Добавление кук на D7 работает иначе. Еси выполнение прерывается,то кука на ставится.
-         * Данный метод вызывается ajax.
-         */
-        $APPLICATION->set_cookie(self::COOKIE_NAME, $verifyCookie, time() + 60480000);
+        $verifyCookie = User::getInstance()->getHash();
+        self::flushCookie();
         return $verifyCookie;
     }
 
+    private static function flushCookie(): void
+    {
+        \CMain::FinalActions();
+    }
+
     /**
-     * Устанваивает/снимает лайк для элемента ИБ с ИД переданным в качестве параметра
-     * @param $ID ИД элемента инфоблока
-     * @return int результат выпоненения:
-     * - 0 - ошибка LikeTable::LIKE_RESULT_ERROR
-     * - 1 - добавлен LikeTable::LIKE_RESULT_ADDED
-     * - 2 - удален LikeTable::LIKE_RESULT_REMOVED
+     * @param int $ID �� �������� ���������
+     * @return int ��������� ����������:
+     * - 0 - ������ LikeResult::LIKE_RESULT_ERROR
+     * - 1 - �������� LikeResult::LIKE_RESULT_ADDED
+     * - 2 - ������ LikeResult::LIKE_RESULT_REMOVED
+     * @throws ArgumentException
+     * @throws ObjectPropertyException
+     * @throws SystemException
+     * @deprecated
+     * �������������/������� ���� ��� �������� �� � �� ���������� � �������� ���������
      */
     public static function setLike($ID)
     {
-        $arLikes = self::checkLike([$ID]);
-        $arFilter = self::getFields();
-        if ($arLikes[$ID] == 0) {
-            $arFilter['ELEMENTID'] = $ID;
-            $server = Context::getCurrent()->getServer();
-            $arFilter['IP'] = self::getIP();
-            $arFilter['USERAGENT'] = $server->get('HTTP_USER_AGENT');
-            $res = self::add($arFilter);
-            $result = $res->isSuccess() ? self::LIKE_RESULT_ADDED : self::LIKE_RESULT_ERROR;
-        } else {
-            $arFilter['LOGIC'] = 'OR';
-            $arFilter = [$arFilter, 'ELEMENTID' => $ID];
-            $likeIterator = self::getList(['filter' => $arFilter, 'select' => ['ID']]);
-            if ($likeIterator->getSelectedRowsCount() == 1) {
-                $arRecord = $likeIterator->fetch();
-                $res = self::delete($arRecord['ID']);
-                $result = $res->isSuccess() ? self::LIKE_RESULT_REMOVED : self::LIKE_RESULT_ERROR;
-            } else {
-                $result = self::LIKE_RESULT_REMOVED;
-            }
-        }
-        return $result;
+        return (new Like((int)$ID))->process();
     }
 
-
+    /**
+     * @deprecated
+     */
     private static function getIP()
     {
         $server = Context::getCurrent()->getServer();
@@ -238,20 +195,5 @@ class LikeTable extends Entity\DataManager
             $ip = $server->get('HTTP_X_REAL_IP');
         }
         return empty($ip) ? $server->get('REMOTE_ADDR') : $ip;
-    }
-
-
-    /**
-     * Обработчик события уделения элемента инфоблока
-     * @param $ID
-     */
-    public static function onBeforeElementDeleteHandler($ID)
-    {
-        $ID = intval($ID);
-        if ($ID > 0) {
-            $connection = Application::getInstance()->getConnection(self::getConnectionName());
-            $sql = "DELETE FROM " . self::getTableName() . " WHERE ELEMENTID = %d";
-            $connection->queryExecute(sprintf($sql, $ID));
-        }
     }
 }

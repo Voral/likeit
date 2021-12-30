@@ -9,8 +9,8 @@
 
 ## Ограничения
 
-- Bitrix версии 16.0 или выше
-- PHP версии 5.6 или выше
+- Bitrix версии 21.600 или выше
+- PHP версии 7.4 или выше
 
 ## Установка
 
@@ -65,7 +65,7 @@ $this->addExternalJS('/bitrix/js/vasoft.likeit/likeit.js');
 
 Класс 'vs-likeit-action' указывается если необходимо обрабатывать клик.
 
-Классы 'vs-likeit-active' и 'vs-likeit-cnt' можно переопределить зада значения JavaScript переменным
+Классы 'vs-likeit-active' и 'vs-likeit-cnt' можно переопределить задавая значения JavaScript переменным
 
 ```js
 window.vas_likeit_classactive = 'my-acive';
@@ -77,10 +77,15 @@ window.vas_likeit_classcnt = 'my-cnt';
 ```php
 \Bitrix\Main\Loader::includeModule('vasoft.likeit');
 $arIDs = [12334, 12334];
-// Без учета текущего пользователя
-$arLikes = \Vasoft\Likeit\LikeTable::checkLike($arIDs, false);
-// C информацией о выборе текущего пользователя
-$arLikes2 = \Vasoft\Likeit\LikeTable::getStatList($arIDs);
+$stat = new \Vasoft\LikeIt\Services\Statistic(); 
+// Без учета текущего пользователя и без кеширования
+$arLikes = $stat->checkLike($arIDs);
+// Без учета текущего пользователя и с кешированием
+$arLikes = $stat->checkLikeCached($arIDs);
+// С информацией о выборе текущего пользователя и без кеширования
+$arLikes = $stat->checkLikeUser($arIDs);
+// С информацией о выборе текущего пользователя и с кешированием
+$arLikes = $stat->checkLikeUserCached($arIDs);
 ```
 
 ## Дополнительная информация
